@@ -1,0 +1,22 @@
+{
+  "name": "a-plus-promise",
+  "version": "1.0.0",
+  "description": "An ES6 class style A+ promise implementation.",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "promises-aplus-tests src/index.js"
+  },
+  "keywords": [
+    "promise",
+    "promises-aplus"
+  ],
+  "author": "wyq",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Uncontrollablly/a-plus-promise.git"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "promises-aplus-tests": "^2.1.2"
+  }
+}
