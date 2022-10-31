@@ -108,15 +108,19 @@ const resolutionProcedure = (promise, x) => {
         break;
       case state.REJECTED:
         promise.reject(x.reason);
-      default:
-        // Problem1
+        break;
+      case state.PENDING:
         x.onFufilledCallbacks.push(() => promise.resolve(x.value));
         x.onRejectedCallbacks.push(() => promise.reject(x.reason));
         break;
+      default:
+        throw new Error("Promise state error");
     }
+    return;
   }
+
   // 2.3.3
-  else if (isObject(x) || isFunction(x)) {
+  if (isObject(x) || isFunction(x)) {
     // 2.3.3.1/2.3.3.2
     let then;
     try {
@@ -124,44 +128,36 @@ const resolutionProcedure = (promise, x) => {
     } catch (e) {
       promise.reject(e);
     }
+
     // 2.3.3.3
     if (isFunction(then)) {
-      // Problem3 let isResolveCalled = (isRejectCalled = false);
-      let isResolveCalled = false,
-        isRejectCalled = false;
+      let isAnyCallbackCalled = false;
       const resolvePromise = (y) => {
-        if (!isResolveCalled && !isRejectCalled) {
+        if (!isAnyCallbackCalled) {
           resolutionProcedure(promise, y);
-          isResolveCalled = true;
+          isAnyCallbackCalled = true;
         }
       };
       const rejectPromise = (r) => {
-        if (!isResolveCalled && !isRejectCalled) {
+        if (!isAnyCallbackCalled) {
           promise.reject(r);
-          isRejectCalled = true;
+          isAnyCallbackCalled = true;
         }
       };
+
       try {
         then.call(x, resolvePromise, rejectPromise);
       } catch (e) {
-        if (!isResolveCalled && !isRejectCalled) {
-          promise.reject(e);
-        }
+        !isAnyCallbackCalled && promise.reject(e);
       }
-    }
-    // 2.3.3.4
-    else {
-      promise.value = x;
-      promise.state = state.FULLFILLED;
-      promise.arrangeOnFullfilledCallbacks();
+      return;
     }
   }
-  // 2.3.4
-  else {
-    promise.value = x;
-    promise.state = state.FULLFILLED;
-    promise.arrangeOnFullfilledCallbacks();
-  }
+
+  // 2.3.4/2.3.3.4
+  promise.value = x;
+  promise.state = state.FULLFILLED;
+  promise.arrangeOnFullfilledCallbacks();
 };
 
 module.exports = APlusPromise;
