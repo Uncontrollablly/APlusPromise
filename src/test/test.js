@@ -1,6 +1,6 @@
 // Own tests here
 
-const APlusPromise = require("./index");
+const APlusPromise = require("../index");
 
 var sentinel = { sentinel: "sentinel" };
 

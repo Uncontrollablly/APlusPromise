@@ -4,7 +4,7 @@
   "description": "An ES6 class style A+ promise implementation.",
   "main": "src/index.js",
   "scripts": {
-    "test": "promises-aplus-tests src/index.js"
+    "test": "promises-aplus-tests src/test/adapter"
   },
   "keywords": [
     "promise",
