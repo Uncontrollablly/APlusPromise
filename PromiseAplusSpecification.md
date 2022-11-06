@@ -12,11 +12,11 @@ Finally, the core Promises/A+ specification does not deal with how to create, fu
 
 ## 1. Terminology
 
-1.  “promise” is an object or function with a `then` method whose behavior conforms to this specification.
-2.  “thenable” is an object or function that defines a `then` method.
-3.  “value” is any legal JavaScript value (including `undefined`, a thenable, or a promise).
-4.  “exception” is a value that is thrown using the `throw` statement.
-5.  “reason” is a value that indicates why a promise was rejected.
+- 1.1 “promise” is an object or function with a `then` method whose behavior conforms to this specification.
+- 1.2 “thenable” is an object or function that defines a `then` method.
+- 1.3 “value” is any legal JavaScript value (including `undefined`, a thenable, or a promise).
+- 1.4 “exception” is a value that is thrown using the `throw` statement.
+- 1.5 “reason” is a value that indicates why a promise was rejected.
 
 ## 2. Requirements
 
@@ -100,14 +100,14 @@ To run `[[Resolve]](promise, x)`, perform the following steps:
 
 If a promise is resolved with a thenable that participates in a circular thenable chain, such that the recursive nature of `[[Resolve]](promise, thenable)` eventually causes `[[Resolve]](promise, thenable)` to be called again, following the above algorithm will lead to infinite recursion. Implementations are encouraged, but not required, to detect such recursion and reject `promise` with an informative `TypeError` as the reason. \[[3.6](#notes)\]
 
-## 4. Notes
+## <a id="notes">3. Notes</a>
 
-1.  Here “platform code” means engine, environment, and promise implementation code. In practice, this requirement ensures that `onFulfilled` and `onRejected` execute asynchronously, after the event loop turn in which `then` is called, and with a fresh stack. This can be implemented with either a “macro-task” mechanism such as [`setTimeout`](https://html.spec.whatwg.org/multipage/webappapis.html#timers) or [`setImmediate`](https://dvcs.w3.org/hg/webperf/raw-file/tip/specs/setImmediate/Overview.html#processingmodel), or with a “micro-task” mechanism such as [`MutationObserver`](https://dom.spec.whatwg.org/#interface-mutationobserver) or [`process.nextTick`](https://nodejs.org/api/process.html#process_process_nexttick_callback). Since the promise implementation is considered platform code, it may itself contain a task-scheduling queue or “trampoline” in which the handlers are called.
-2.  That is, in strict mode `this` will be `undefined` inside of them; in sloppy mode, it will be the global object.
-3.  Implementations may allow `promise2 === promise1`, provided the implementation meets all requirements. Each implementation should document whether it can produce `promise2 === promise1` and under what conditions.
-4.  Generally, it will only be known that `x` is a true promise if it comes from the current implementation. This clause allows the use of implementation-specific means to adopt the state of known-conformant promises.
-5.  This procedure of first storing a reference to `x.then`, then testing that reference, and then calling that reference, avoids multiple accesses to the `x.then` property. Such precautions are important for ensuring consistency in the face of an accessor property, whose value could change between retrievals.
-6.  Implementations should _not_ set arbitrary limits on the depth of thenable chains, and assume that beyond that arbitrary limit the recursion will be infinite. Only true cycles should lead to a `TypeError`; if an infinite chain of distinct thenables is encountered, recursing forever is the correct behavior.
+- 3.1 Here “platform code” means engine, environment, and promise implementation code. In practice, this requirement ensures that `onFulfilled` and `onRejected` execute asynchronously, after the event loop turn in which `then` is called, and with a fresh stack. This can be implemented with either a “macro-task” mechanism such as [`setTimeout`](https://html.spec.whatwg.org/multipage/webappapis.html#timers) or [`setImmediate`](https://dvcs.w3.org/hg/webperf/raw-file/tip/specs/setImmediate/Overview.html#processingmodel), or with a “micro-task” mechanism such as [`MutationObserver`](https://dom.spec.whatwg.org/#interface-mutationobserver) or [`process.nextTick`](https://nodejs.org/api/process.html#process_process_nexttick_callback). Since the promise implementation is considered platform code, it may itself contain a task-scheduling queue or “trampoline” in which the handlers are called.
+- 3.2 That is, in strict mode `this` will be `undefined` inside of them; in sloppy mode, it will be the global object.
+- 3.3 Implementations may allow `promise2 === promise1`, provided the implementation meets all requirements. Each implementation should document whether it can produce `promise2 === promise1` and under what conditions.
+- 3.4 Generally, it will only be known that `x` is a true promise if it comes from the current implementation. This clause allows the use of implementation-specific means to adopt the state of known-conformant promises.
+- 3.5 This procedure of first storing a reference to `x.then`, then testing that reference, and then calling that reference, avoids multiple accesses to the `x.then` property. Such precautions are important for ensuring consistency in the face of an accessor property, whose value could change between retrievals.
+- 3.6 Implementations should _not_ set arbitrary limits on the depth of thenable chains, and assume that beyond that arbitrary limit the recursion will be infinite. Only true cycles should lead to a `TypeError`; if an infinite chain of distinct thenables is encountered, recursing forever is the correct behavior.
 
 ---
 
