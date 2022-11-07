@@ -1,116 +1,82 @@
 const state = require("./state");
-const { isFunction, isObject, createMicroTask } = require("./helpers");
+const { isFunction, isObject, createMicroTasks } = require("./utils");
 
 class APlusPromise {
   constructor(executor) {
     this.state = state.PENDING;
     this.value = null;
     this.reason = null;
-    this.onFufilledCallbacks = [];
+    this.onFulfilledCallbacks = [];
     this.onRejectedCallbacks = [];
-    isFunction(executor) &&
-      executor(this.resolve.bind(this), this.reject.bind(this));
+
+    executor(this.resolve.bind(this), this.reject.bind(this));
   }
 
   resolve(value) {
     if (this.state !== state.PENDING) return;
-
-    // Problem2
     resolutionProcedure(this, value);
   }
 
   reject(reason) {
     if (this.state !== state.PENDING) return;
-
     this.state = state.REJECTED;
     this.reason = reason;
-    this.arrangeOnRejectedCallbacks();
+    createMicroTasks(this.onRejectedCallbacks);
   }
 
-  then(onFullfilled, onRejected) {
-    let promise2 = new APlusPromise();
+  then(onFulfilled, onRejected) {
+    const promise2 = new APlusPromise(() => {});
+    onFulfilled = isFunction(onFulfilled) ? onFulfilled : (value) => value;
+    onRejected = isFunction(onRejected)
+      ? onRejected
+      : (value) => {
+          throw value;
+        };
 
-    // 2.2.2
-    if (isFunction(onFullfilled)) {
-      this.onFufilledCallbacks.push(() => {
-        try {
-          // 2.2.7.1
-          const x = onFullfilled(this.value);
-          resolutionProcedure(promise2, x);
-        } catch (e) {
-          // 2.2.7.2
-          promise2.reject(e);
-        }
-      });
-    } else {
-      this.onFufilledCallbacks.push(() => {
-        promise2.resolve(this.value);
-      });
+    this.onFulfilledCallbacks.push(() => {
+      try {
+        const x = onFulfilled(this.value);
+        resolutionProcedure(promise2, x);
+      } catch (e) {
+        promise2.reject(e);
+      }
+    });
+    this.onRejectedCallbacks.push(() => {
+      try {
+        const x = onRejected(this.reason);
+        resolutionProcedure(promise2, x);
+      } catch (e) {
+        promise2.reject(e);
+      }
+    });
+
+    if (this.state === state.FULFILLED) {
+      createMicroTasks(this.onFulfilledCallbacks);
     }
-
-    // 2.2.3
-    if (isFunction(onRejected)) {
-      this.onRejectedCallbacks.push(() => {
-        try {
-          // 2.2.7.1
-          const x = onRejected(this.reason);
-          resolutionProcedure(promise2, x);
-        } catch (e) {
-          // 2.2.7.2
-          promise2.reject(e);
-        }
-      });
-    } else {
-      this.onRejectedCallbacks.push(() => {
-        promise2.reject(this.reason);
-      });
-    }
-
-    if (this.state === state.FULLFILLED) {
-      this.arrangeOnFullfilledCallbacks();
-    }
-
     if (this.state === state.REJECTED) {
-      this.arrangeOnRejectedCallbacks();
+      createMicroTasks(this.onRejectedCallbacks);
     }
 
-    // 2.2.7
     return promise2;
-  }
-
-  arrangeOnFullfilledCallbacks() {
-    while (this.onFufilledCallbacks.length) {
-      createMicroTask(this.onFufilledCallbacks.shift());
-    }
-    this.onRejectedCallbacks = [];
-  }
-
-  arrangeOnRejectedCallbacks() {
-    while (this.onRejectedCallbacks.length) {
-      createMicroTask(this.onRejectedCallbacks.shift());
-    }
-    this.onFufilledCallbacks = [];
   }
 }
 
 const resolutionProcedure = (promise, x) => {
-  // 2.3.1
   if (promise === x) {
     promise.reject(new TypeError("Promise can not resolve to itself"));
     return;
   }
 
-  // 2.3.2
   if (x instanceof APlusPromise) {
     switch (x.state) {
-      case state.FULLFILLED:
+      case state.FULFILLED:
         promise.resolve(x.value);
         break;
       case state.REJECTED:
         promise.reject(x.reason);
         break;
       case state.PENDING:
-        x.onFufilledCallbacks.push(() => promise.resolve(x.value));
+        x.onFulfilledCallbacks.push(() => promise.resolve(x.value));
         x.onRejectedCallbacks.push(() => promise.reject(x.reason));
         break;
       default:
@@ -119,9 +85,7 @@ const resolutionProcedure = (promise, x) => {
     return;
   }
 
-  // 2.3.3
   if (isObject(x) || isFunction(x)) {
-    // 2.3.3.1/2.3.3.2
     let then;
     try {
       then = x.then;
@@ -129,7 +93,6 @@ const resolutionProcedure = (promise, x) => {
       promise.reject(e);
     }
 
-    // 2.3.3.3
     if (isFunction(then)) {
       let isAnyCallbackCalled = false;
       const resolvePromise = (y) => {
@@ -154,10 +117,9 @@ const resolutionProcedure = (promise, x) => {
     }
   }
 
-  // 2.3.4/2.3.3.4
   promise.value = x;
-  promise.state = state.FULLFILLED;
-  promise.arrangeOnFullfilledCallbacks();
+  promise.state = state.FULFILLED;
+  createMicroTasks(promise.onFulfilledCallbacks);
 };
 
 module.exports = APlusPromise;
