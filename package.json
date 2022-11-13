@@ -5,7 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "test": "mocha test/tests.spec.js",
-    "test:in:browser": "browserify test/tests.spec.js -o test/tests.browser.js && start test/index.html"
+    "test:browser:windows": "browserify test/tests.spec.js -o test/tests.browser.js && start test/index.html",
+    "test:browser:mac": "browserify test/tests.spec.js -o test/tests.browser.js && open test/index.html"
   },
   "keywords": [
     "promise",
