@@ -1,4 +1,4 @@
-const APlusPromise = require("../index");
+const APlusPromise = require("../src/index");
 
 const adapter = {
   deferred() {
